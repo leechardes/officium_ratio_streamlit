@@ -23,16 +23,11 @@ def show_overview():
 
     # Remover as linhas que contenham as categorias excluídas
     df_filtered = st.session_state.df[~st.session_state.df['Descrição Categoria'].isin(excluded_categories)]
-
-    # total_grupo_1 = df_filtered[df_filtered['Código Grupo'] == 1]['Valor'].sum()
-    # st.write(total_grupo_1)
+    df_ignored_excluded = st.session_state.df
 
     # Agrupa por Ano-Mês-Dia e Trimestre
     st.session_state.total_grupo_1_ymd = df_filtered[df_filtered['Código Grupo'] == 1].groupby('Mês/Ano')['Valor'].sum()
     st.session_state.total_grupo_1_trimestre = df_filtered[df_filtered['Código Grupo'] == 1].groupby('Trimestre')['Valor'].sum()
-
-    # st.write(st.session_state.total_grupo_1_ymd)
-    # st.write(st.session_state.total_grupo_1_trimestre)
         
     # Filtros
     st.session_state.is_quarterly = st.session_state.exibe_trimestre == "Trimestre"
@@ -54,9 +49,9 @@ def show_overview():
         all_defined_categories.extend(description_category)
 
         # Filtra o DataFrame com base nas descrições de categoria
-        df_filtered_category = df_filtered[df_filtered['Descrição Categoria'].isin(description_category)]
+        df_filtered_category = df_ignored_excluded[df_ignored_excluded['Descrição Categoria'].isin(description_category)]
         show_summary(df_filtered_category, title=title, x_field='Descrição Categoria')
-
+     
     # Gera o df_outros filtrando todas as categorias que não estão no JSON
     df_outros = df_filtered[~df_filtered['Descrição Categoria'].isin(all_defined_categories)]
     show_summary(df_outros, title='Outros', x_field='Descrição Categoria')
