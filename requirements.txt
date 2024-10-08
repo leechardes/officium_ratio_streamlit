@@ -4,3 +4,4 @@ plotly
 setuptools
 xlsxwriter
 openpyxl
+babel
