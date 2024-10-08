@@ -1,0 +1,20 @@
+[
+    {
+        "username": "admin",
+        "password": "senha123",
+        "nome": "Administrador",
+        "grupo": "admin"
+    },
+    {
+        "username": "heraclito",
+        "password": "hera123",
+        "nome": "Her\u00e1rclito",
+        "grupo": "admin"
+    },
+    {
+        "username": "lee",
+        "password": "lee123",
+        "nome": "Lee Chardes",
+        "grupo": "admin"
+    }
+]
