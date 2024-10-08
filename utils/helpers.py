@@ -1,8 +1,8 @@
-import locale
 import pandas as pd
+from babel.numbers import format_currency
 
 def format_real(value):
-    return locale.currency(value, grouping=True, symbol=None)
+    return format_currency(value, 'BRL', locale='pt_BR')
 
 def apply_filters(df, trimestre_selecionado, mes_ano_selecionado, grupo_selecionado, subgrupo_selecionado, categoria_selecionada):
     """
