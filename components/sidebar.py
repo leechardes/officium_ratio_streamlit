@@ -8,7 +8,7 @@ def create_sidebar(df):
     exibe_grafico = st.sidebar.selectbox("Exibe gráfico?", ["Sim", "Não"])
     exibe_por = st.sidebar.selectbox("Exibe por trimestre ou mês?", ["Trimestre", "Mês"])
 
-    page = st.sidebar.selectbox("Escolha uma página", ["Visão Geral", "Configuração"])
+    page = st.sidebar.selectbox("Escolha uma página", ["Visão Geral", "Configuração", "Versão"])
 
     # Filtros
     trimestre = sorted(df['Trimestre'].unique())
