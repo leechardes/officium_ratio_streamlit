@@ -36,11 +36,11 @@ def save_categories(categories):
     with open('config/categories.json', 'w') as f:
         json.dump(categories, f, indent=4)
 
-# Função para adicionar nova categoria
+# Função para adicionar novo subgrupos
 def add_category(categories):
-    st.subheader("Adicionar nova categoria")
-    new_category_title = st.text_input("Título da categoria", key="new_category_title")
-    new_category_description = st.text_input("Descrição da categoria", key="new_category_description")
+    st.subheader("Adicionar novo subgrupo")
+    new_category_title = st.text_input("Título da subgrupo", key="new_category_title")
+    new_category_description = st.text_input("Descrição da subgrupo", key="new_category_description")
     
     def add_category_action():
         new_category = {
@@ -50,20 +50,20 @@ def add_category(categories):
         if new_category["title"] not in [cat["title"] for cat in categories["categories"]]:
             categories["categories"].append(new_category)
             save_categories(categories)
-            st.success("Categoria adicionada com sucesso!")
+            st.success("Subgrupo adicionado com sucesso!")
         else:
-            st.warning("Essa categoria já existe.")
+            st.warning("Esse subgrupo já existe.")
         # Limpar campos
         st.session_state["new_category_title"] = ""
         st.session_state["new_category_description"] = ""
 
     st.button("Adicionar", on_click=add_category_action)
 
-# Função para editar categorias
+# Função para editar subgrupos
 def edit_category(categories):
-    st.subheader("Editar categorias existentes")
+    st.subheader("Editar subgrupos existentes")
     category_titles = [category["title"] for category in categories["categories"]]
-    selected_category = st.selectbox("Selecione a categoria para editar", category_titles)
+    selected_category = st.selectbox("Selecione a subgrupo para editar", category_titles)
 
     # Função para adicionar a nova descrição e limpar os campos
     def add_description():
@@ -101,7 +101,7 @@ def edit_category(categories):
     if selected_category:
         for category in categories["categories"]:
             if category["title"] == selected_category:
-                category_title = st.text_input("Título da categoria", value=category["title"])
+                category_title = st.text_input("Título da subgrupo", value=category["title"])
                 descriptions = category["description_category"]
                 num_descriptions = len(descriptions)
 
@@ -129,11 +129,11 @@ def edit_category(categories):
                 st.text_input("Nova descrição", key="new_description")
                 st.button("Adicionar", key="add_description_button", on_click=add_description)
 
-# Função para excluir categorias
+# Função para excluir subgrupos
 def delete_category(categories):
-    st.subheader("Excluir categorias existentes")
+    st.subheader("Excluir subgrupos existentes")
     category_titles = [category["title"] for category in categories["categories"]]
-    selected_category_to_delete = st.selectbox("Selecione a categoria para excluir", category_titles, key="selected_category_to_delete")
+    selected_category_to_delete = st.selectbox("Selecione o subgrupo para excluir", category_titles, key="selected_category_to_delete")
     
     if selected_category_to_delete:
         def delete_action():
@@ -141,14 +141,12 @@ def delete_category(categories):
                 if category["title"] == selected_category_to_delete:
                     categories["categories"].remove(category)
                     save_categories(categories)
-                    st.success("Categoria excluída com sucesso!")
-                    # Remover a categoria e reiniciar a página
-                    # st.rerun()
+                    st.success("Subgrupo excluída com sucesso!")
         
         st.button("Excluir", on_click=delete_action)
 
 def edit_excluded_categories(categories):
-    st.subheader("Editar categorias excluídas")
+    st.subheader("Editar subgrupos excluídos")
     excluded_descriptions = categories["excluded_categories"]
 
     # Função para remover uma descrição
