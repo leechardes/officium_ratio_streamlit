@@ -1,7 +1,24 @@
 import json
+import os
 import streamlit as st
+import csv
+import os
+import shutil
+import logging
+import pandas as pd
+import streamlit as st
+from datetime import datetime
+from utils.process_csv import process_csv  # Usando o script que você forneceu
+from data.data_loader import load_data
 
-# Carregar e salvar categorias
+# Configurar logging
+log_file = "processamento.log"
+logging.basicConfig(
+    filename=log_file,
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
 # Carregar categorias e garantir que as propriedades existam
 def load_categories():
     with open('config/categories.json', 'r') as f:
@@ -247,6 +264,74 @@ def save_users(users):
     with open('config/users.json', 'w') as f:
         json.dump(users, f, indent=4)
 
+# Função para backup do arquivo
+def backup_file(file_path):
+    backup_dir = "backups"
+    if not os.path.exists(backup_dir):
+        os.makedirs(backup_dir)
+    
+    # Gerar nome do backup com data e hora
+    backup_filename = f"data_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    backup_path = os.path.join(backup_dir, backup_filename)
+    
+    shutil.copy(file_path, backup_path)
+    logging.info(f"Backup criado: {backup_path}")
+
+# Função para processar o arquivo CSV
+def process_uploaded_files(files):
+    upload_dir = "uploads"
+    if not os.path.exists(upload_dir):
+        os.makedirs(upload_dir)
+
+    # Backup do arquivo atual antes da atualização
+    data_file = "data/data.csv"
+    if os.path.exists(data_file):
+        backup_file(data_file)
+
+    output_file = 'data/data.csv'  # O arquivo final processado
+    months = []
+
+    with open(output_file, mode='w', newline='', encoding='utf-8') as outfile:
+        writer = csv.writer(outfile, delimiter=';')
+
+        # Escrever o cabeçalho no arquivo de saída com os nomes atualizados
+        writer.writerow([
+            'Código Grupo', 'Descrição Grupo', 
+            'Código SubGrupo', 'Descrição SubGrupo', 
+            'Sequência Grupo', 'Descrição Categoria', 
+            'Mês/Ano', 'Ano-Mês-Dia', 'Valor', 'Trimestre'  # Adiciona o cabeçalho para o Trimestre
+        ])
+
+        # Loop pelos arquivos selecionados para processamento
+        for file in files:
+            file_path = os.path.join(upload_dir, file.name)
+            
+            # Salvar o arquivo na pasta uploads
+            with open(file_path, "wb") as f:
+                f.write(file.read())
+            logging.info(f"Arquivo carregado: {file_path}")
+
+            # Processar o arquivo CSV
+            try:
+                process_csv(file_path, writer, months)
+                logging.info(f"Arquivo processado com sucesso: {file_path}")
+            except Exception as e:
+                logging.error(f"Erro ao processar o arquivo {file.name}: {e}")
+                st.error(f"Erro ao processar o arquivo {file.name}: {e}")
+
+    st.success("Processamento e backup concluídos com sucesso!")
+    logging.info("Processamento concluído com sucesso.")
+
+def reset_uploader():
+    # Resetar o file_uploader
+    st.session_state['uploaded_files'] = []
+
+# Função para limpar o diretório de uploads
+def clear_upload_folder(upload_dir):
+    if os.path.exists(upload_dir):
+        shutil.rmtree(upload_dir)  # Remove todo o diretório de upload
+    os.makedirs(upload_dir) 
+
 # Função principal de configuração
 def show_config():
     st.title("Configuração")
@@ -264,3 +349,29 @@ def show_config():
     delete_category(categories)
     edit_excluded_categories(categories)
     manage_users()
+
+    # Interface com o usuário
+    st.write("### Upload e Processamento de Arquivos CSV")
+
+    # Inicialize uma chave única para o file_uploader no session_state
+    if 'uploader_key' not in st.session_state:
+        st.session_state['uploader_key'] = 0
+
+    # Criar uma opção de upload de arquivos CSV
+    uploaded_files = st.file_uploader("Selecione um ou mais arquivos CSV", type=["csv"], accept_multiple_files=True, key=f"uploader_{st.session_state['uploader_key']}")
+
+    # Verificar se algum arquivo foi selecionado
+    # Processar arquivos quando o botão for clicado
+    if st.button("Processar"):
+        if uploaded_files:
+            # Definir o diretório de upload
+            upload_dir = "uploads"
+            process_uploaded_files(uploaded_files)  # Processar os arquivos
+            reset_uploader()  # Reiniciar o file uploader
+            clear_upload_folder(upload_dir)  # Limpar a pasta de uploads
+            st.cache_data.clear()  # Limpar o cache
+            st.session_state.df = load_data()  # Recarregar os dados
+            st.session_state['uploader_key'] += 1  # Incrementar a chave
+            # st.rerun()
+        else:
+            st.warning("Por favor, selecione pelo menos um arquivo CSV para processar.")

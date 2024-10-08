@@ -12,16 +12,8 @@ def load_categories():
     with open('config/categories.json', 'r') as f:
         return json.load(f)
     
-def show_overview(df,exibe_grafico, exibe_por):
+def show_overview():
     st.title("Dashboard Financeiro - Visão Geral")
-
-    # # Primeiro, crie a condição corretamente
-    # condition_repasse = (df['Código Grupo'].isin([6])) & \
-    #                     (df['Código SubGrupo'].isin([1,2])) & \
-    #                     (df['Descrição Categoria'].isin(['Repasse laboratório Dore','Distrib. Lucro Laboratório']))
-    
-    # df_semrepasse = df[~condition_repasse]
-    # df_repasse = df[condition_repasse]
 
     # Carrega as categorias a partir do arquivo JSON
     categories = load_categories()
@@ -30,41 +22,44 @@ def show_overview(df,exibe_grafico, exibe_por):
     excluded_categories = categories["excluded_categories"]
 
     # Remover as linhas que contenham as categorias excluídas
-    df_filtered = df[~df['Descrição Categoria'].isin(excluded_categories)]
+    df_filtered = st.session_state.df[~st.session_state.df['Descrição Categoria'].isin(excluded_categories)]
 
+    # total_grupo_1 = df_filtered[df_filtered['Código Grupo'] == 1]['Valor'].sum()
+    # st.write(total_grupo_1)
+
+    # Agrupa por Ano-Mês-Dia e Trimestre
+    st.session_state.total_grupo_1_ymd = df_filtered[df_filtered['Código Grupo'] == 1].groupby('Mês/Ano')['Valor'].sum()
+    st.session_state.total_grupo_1_trimestre = df_filtered[df_filtered['Código Grupo'] == 1].groupby('Trimestre')['Valor'].sum()
+
+    # st.write(st.session_state.total_grupo_1_ymd)
+    # st.write(st.session_state.total_grupo_1_trimestre)
+        
     # Filtros
-    is_quarterly = exibe_por == "Trimestre"
-    is_percent = exibe_grafico == "Sim"
+    st.session_state.is_quarterly = st.session_state.exibe_trimestre == "Trimestre"
+    st.session_state.is_percent = st.session_state.calcula_percentual == "Sim"
+    st.session_state.is_graph = st.session_state.exibe_grafico == "Sim" and  st.session_state.is_percent
 
     show_main_metrics(df_filtered)
-    show_bar_chart(df_filtered,'Descrição Grupo')
+    show_bar_chart(df_filtered, 'Descrição Grupo')
 
-    show_summary(df_filtered, title='Resumo por Grupo', x_field='Descrição Grupo', is_quarterly=is_quarterly, is_percent=is_percent)
-
-    show_summary(df_filtered, title='Resumo por Grupo', x_field='Descrição Grupo', is_quarterly= not is_quarterly, is_percent=is_percent)
+    show_summary(df_filtered, title='Resumo por Grupo', x_field='Descrição Grupo')
+    show_summary(df_filtered, title='Resumo por Grupo Detalhado', x_field='Descrição Grupo', is_quarterly=not st.session_state.is_quarterly)
 
     # Lista para armazenar todas as descrições de categoria do JSON
     all_defined_categories = []
 
-    # Itera pelas categorias e exibe a análise de cada uma
     for category in categories['categories']:
         title = category['title']
         description_category = category['description_category']
-
-        # Adiciona as categorias definidas à lista
         all_defined_categories.extend(description_category)
 
         # Filtra o DataFrame com base nas descrições de categoria
-        df_filtered = df[df['Descrição Categoria'].isin(description_category)]
-        
-        # Chama a função show_summary para exibir a análise
-        show_summary(df_filtered, title=title, x_field='Descrição Categoria', is_quarterly=is_quarterly, is_percent=is_percent)
+        df_filtered_category = df_filtered[df_filtered['Descrição Categoria'].isin(description_category)]
+        show_summary(df_filtered_category, title=title, x_field='Descrição Categoria')
 
     # Gera o df_outros filtrando todas as categorias que não estão no JSON
-    df_outros = df[~df['Descrição Categoria'].isin(all_defined_categories)]
-
-    # Exibe o df_outros
-    show_summary(df_outros, title='Outros', x_field='Descrição Categoria', is_quarterly=is_quarterly, is_percent=is_percent)
+    df_outros = df_filtered[~df_filtered['Descrição Categoria'].isin(all_defined_categories)]
+    show_summary(df_outros, title='Outros', x_field='Descrição Categoria')
 
 def show_dataframe(df):
     st.write(df)
@@ -103,37 +98,33 @@ def show_line_chart(df, x_field, group_field):
     )
     st.plotly_chart(fig_line, use_container_width=True)
 
-def show_summary(df, x_field, title, is_quarterly=False, is_percent=False, group_1=None, group_2=None, description_1=None, description_2=None):
-    
+def show_summary(df, x_field, title, is_quarterly = st.session_state.get('is_quarterly', False) ,group_1=None,group_2=None,description_1=None,description_2=None):
     if is_quarterly:
         df = df.groupby(['Trimestre', x_field])['Valor'].sum().reset_index()
     else:
         df = df.groupby(['Ano-Mês-Dia', x_field, 'Mês/Ano'])['Valor'].sum().reset_index()
 
     pivot = create_pivot_table(df, x_field, is_quarterly)
-    pivot_combined = create_combined_pivot(pivot, is_percent, group_1, group_2, description_1, description_2)
-    
-    pivot_combined.index.name = title   
-    
+    pivot_combined = create_combined_pivot(pivot, is_quarterly, group_1, group_2, description_1, description_2)
+
+    pivot_combined.index.name = title
     display_pivot_table(pivot_combined)
-    
-    if is_percent:
-        display_percentage_chart(pivot_combined)
+
+    if st.session_state.is_graph:
+        display_percentage_chart(pivot_combined, is_quarterly)
 
     df_excel = pivot_combined.copy()
 
-    # Gera um identificador único usando uuid
-    unique_id = str(uuid.uuid4())  # Gera um ID único aleatório
-    
+    unique_id = str(uuid.uuid4())
     st.download_button(
         label="Download em Excel",
         data=to_excel(df_excel),
         file_name="dados.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        key=f"download_button_{unique_id}"  # Usa o ID único como a key
+        key=f"download_button_{unique_id}"
     )
 
-def create_pivot_table(df,x_field,is_quarterly):
+def create_pivot_table(df, x_field, is_quarterly):
     
     if is_quarterly:
         x_field_pivot = 'Trimestre'
@@ -154,10 +145,10 @@ def create_pivot_table(df,x_field,is_quarterly):
         pivot.columns = df['Mês/Ano'].unique()
     return pivot
 
-def create_combined_pivot(pivot,is_percent=False,group_1=None,group_2=None,description_1=None,description_2=None):
+def create_combined_pivot(pivot, is_quarterly, group_1, group_2, description_1, description_2):
     
-    if is_percent:
-        pivot_percent = calculate_percentages(pivot)
+    if st.session_state.is_percent:
+        pivot_percent = calculate_percentages(pivot, is_quarterly)
         pivot_combined = combine_pivot_and_percent(pivot, pivot_percent)
     else:
         pivot_combined = pivot.copy()
@@ -165,10 +156,13 @@ def create_combined_pivot(pivot,is_percent=False,group_1=None,group_2=None,descr
     pivot_combined = add_totals(pivot_combined,group_1,group_2,description_1,description_2)
     return pivot_combined
 
-def calculate_percentages(pivot):
+def calculate_percentages(pivot, is_quarterly):
     pivot_percent = pivot.copy()
     for col in pivot.columns:
-        first_row_value = pivot.iloc[0][col]
+        if is_quarterly:
+            first_row_value = st.session_state.total_grupo_1_trimestre[col]
+        else:
+            first_row_value = st.session_state.total_grupo_1_ymd[col]   
         pivot_percent[col] = pivot[col] / first_row_value * 100 if first_row_value != 0 else 0
     return pivot_percent
 
@@ -234,13 +228,17 @@ def display_pivot_table(pivot_combined):
         use_container_width=True
     )
 
-def display_percentage_chart(pivot_combined):
+def display_percentage_chart(pivot_combined, is_quarterly):
     percent_columns = [col for col in pivot_combined.columns if '%' in col]
     df_percentual = pivot_combined[percent_columns].transpose()
+
+    title = 'Evolução Percentual / ' + ('Trimestre' if is_quarterly else 'Mês')
+    labels = {'value': 'Percentual (%)', 'index': 'Trimestres' if is_quarterly else 'Meses'}
+
     fig = px.line(
         df_percentual, 
-        title='Evolução Percentual por Grupo / Trimestre',
-        labels={'value': 'Percentual (%)', 'index': 'Trimestres'}
+        title=title,
+        labels=labels
     )
     st.plotly_chart(fig, use_container_width=True)
 

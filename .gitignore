@@ -58,6 +58,7 @@ venv.bak/
 
 # VS Code settings
 .vscode/
+*.csv
 
 # macOS
 .DS_Store
