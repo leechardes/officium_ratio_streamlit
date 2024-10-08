@@ -160,6 +160,92 @@ def edit_excluded_categories(categories):
     st.text_input("Nova descrição excluída", key="new_excluded_description")
     st.button("Adicionar nova descrição", key="add_new_excluded", on_click=add_new_excluded_description)
 
+def manage_users():
+    st.title("Gerenciamento de Usuários")
+    users = load_users()
+
+    # Lista de usuários
+    st.subheader("Editar ou Excluir Usuários Existentes")
+    col1, col2, col3, col4, col5, col6 = st.columns([2, 3, 2, 2, 1, 1])  # Adiciona uma terceira coluna para o botão de deletar
+    with col1:
+        st.write("Usuário")
+    with col2:
+        st.write("Nome")
+    with col3:
+        st.write("Senha")
+    with col4:
+        st.write("Grupo")
+
+    for i, user in enumerate(users):
+        col1, col2, col3, col4, col5, col6 = st.columns([2, 3, 2, 2, 1, 1])  # Adiciona mais colunas
+
+        # O campo username é fixo, não pode ser alterado
+        with col1:
+            st.text_input(f"Usuário {i+1}", value=user['username'], key=f"username_{i}", disabled=True, label_visibility="collapsed")
+
+        # Campo Nome
+        with col2:
+            nome = st.text_input(f"Nome {i+1}", value=user['nome'], key=f"nome_{i}", label_visibility="collapsed")
+
+        # Campo Senha
+        with col3:
+            password = st.text_input(f"Senha {i+1}", value=user['password'], key=f"password_{i}", type="password", label_visibility="collapsed")
+
+        # Campo Grupo (seleção de grupo)
+        with col4:
+            grupo = st.selectbox(f"Grupo {i+1}", options=["admin", "usuario"], index=["admin", "usuario"].index(user['grupo']), key=f"grupo_{i}", label_visibility="collapsed")
+
+        # Botão de salvar
+        with col5:
+            if st.button("Salvar", key=f"save_user_{i}"):
+                # Atualiza as informações do usuário, exceto o username
+                users[i]["nome"] = nome
+                users[i]["password"] = password
+                users[i]["grupo"] = grupo
+                save_users(users)
+                st.success(f"Informações do usuário {user['username']} atualizadas com sucesso!")
+
+        # Botão de deletar
+        with col6:
+            if st.button("Deletar", key=f"delete_user_{i}"):
+                users.pop(i)
+                save_users(users)
+                st.success(f"Usuário {user['username']} excluído com sucesso!")
+
+    # Adicionar novo usuário
+    st.subheader("Adicionar novo usuário")
+    new_username = st.text_input("Nome de Usuário", key="new_username")
+    new_password = st.text_input("Senha", type="password", key="new_password")
+    new_nome = st.text_input("Nome", key="new_nome")
+    new_grupo = st.selectbox("Grupo", ["admin", "usuario"], key="new_grupo")
+
+    def add_user_action():
+        new_user = {
+            "username": new_username,
+            "password": new_password,
+            "nome": new_nome,
+            "grupo": new_grupo
+        }
+        users.append(new_user)
+        save_users(users)
+        st.success("Usuário adicionado com sucesso!")
+        # Limpar os campos após adicionar
+        st.session_state["new_username"] = ""
+        st.session_state["new_password"] = ""
+        st.session_state["new_nome"] = ""
+        st.session_state["new_grupo"] = "usuario"
+
+    st.button("Adicionar Usuário", on_click=add_user_action)
+
+def load_users():
+    with open('config/users.json', 'r') as f:
+        users = json.load(f)
+    return users
+
+
+def save_users(users):
+    with open('config/users.json', 'w') as f:
+        json.dump(users, f, indent=4)
 
 # Função principal de configuração
 def show_config():
@@ -177,3 +263,4 @@ def show_config():
     edit_category(categories)
     delete_category(categories)
     edit_excluded_categories(categories)
+    manage_users()
