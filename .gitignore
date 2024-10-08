@@ -60,6 +60,8 @@ venv.bak/
 .vscode/
 *.csv
 data/data.csv
+categories.json
+users.json
 
 # macOS
 .DS_Store
