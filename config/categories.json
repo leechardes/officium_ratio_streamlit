@@ -1,0 +1,156 @@
+{
+    "categories": [
+        {
+            "title": "3.01 Receitas de Vendas e de Servi\u00e7os",
+            "description_category": [
+                "Receita de conv\u00eanios",
+                "Receitas de Servi\u00e7os Cart\u00e3o C/D",
+                "Receitas de Servi\u00e7os em Esp\u00e9cie",
+                "Receitas de Servi\u00e7os PIX"
+            ]
+        },
+        {
+            "title": "4.01 Impostos sobre Vendas e Servi\u00e7os",
+            "description_category": [
+                "COFINS",
+                "CSL",
+                "IRPJ",
+                "ISS sobre Faturamento",
+                "Parcelamento do Simples Nacional",
+                "PIS",
+                "Simples Nacional - DAS"
+            ]
+        },
+        {
+            "title": "4.02 Despesas com Vendas e Servi\u00e7os",
+            "description_category": [
+                "Aluguel de Maquinas e Equipamentos",
+                "DEVOLU\u00c7\u00c3O DE SERVI\u00c7O",
+                "Documentos Odonto",
+                "Laudos de Exames Terceirizados",
+                "Materiais Aplicados na Presta\u00e7\u00e3o de Servi\u00e7os",
+                "Material M\u00e9dico Hospitalar",
+                "Reembolso M\u00e9dicos ref NFE",
+                "Repasse M\u00e9dicos"
+            ]
+        },
+        {
+            "title": "4.03 Despesas com Sal\u00e1rios e Encargos",
+            "description_category": [
+                "Ajuda de Custo",
+                "F\u00e9rias",
+                "FGTS e Multa de FGTS",
+                "INSS sobre Sal\u00e1rios - GPS",
+                "Rescis\u00f5es",
+                "Reten\u00e7\u00e3o - Darf 5952 - PIS/COFINS/CSLL",
+                "Sal\u00e1rios",
+                "Contribui\u00e7\u00e3o Sindical",
+                "Fardamento",
+                "Gratifica\u00e7\u00f5es",
+                "Plano Odontol\u00f3gico Colaboradores",
+                "Vale-Transporte"
+            ]
+        },
+        {
+            "title": "4.05 Despesas Administrativas",
+            "description_category": [
+                "Coleta de Lixo Hospitalar",
+                "Combust\u00edveis",
+                "Copa e Cozinha",
+                "Correios",
+                "Despesas a identificar",
+                "Fatura Cart\u00e3o",
+                "Honor\u00e1rios (outros)",
+                "Honor\u00e1rios Advocat\u00edcios",
+                "Honor\u00e1rios Cont\u00e1beis",
+                "Lanches e Refei\u00e7\u00f5es",
+                "Manuten\u00e7\u00e3o de Equipamentos",
+                "Materiais de Escrit\u00f3rio",
+                "Materiais de Limpeza e Higiene",
+                "Material de Expediente",
+                "Mensalidade CIEE",
+                "Mensalidade Sistema",
+                "Presta\u00e7\u00e3o de Servi\u00e7os",
+                "Rastreamento",
+                "Reten\u00e7\u00e3o - ISS Servi\u00e7os Tomados",
+                "Seguros de Ve\u00edculos",
+                "Taxa",
+                "Telefonia e Internet",
+                "Telefonia M\u00f3vel",
+                "Transporte Urbano (t\u00e1xi, Uber)",
+                "Despesas a identificar"
+            ]
+        },
+        {
+            "title": "4.06 Despesas Comerciais",
+            "description_category": [
+                "Brindes para Clientes",
+                "Marketing e Publicidade"
+            ]
+        },
+        {
+            "title": "4.07 Despesas com Im\u00f3vel",
+            "description_category": [
+                "\u00c1gua e Saneamento",
+                "Aluguel",
+                "Energia El\u00e9trica",
+                "IPTU",
+                "Manuten\u00e7\u00e3o Predial",
+                "Material de Constru\u00e7\u00e3o",
+                "Seguro de Im\u00f3veis",
+                "TCR",
+                "Vigil\u00e2ncia e Seguran\u00e7a Patrimonial"
+            ]
+        },
+        {
+            "title": "4.10 Despesas Financeiras",
+            "description_category": [
+                "Tarifas Banc\u00e1rias",
+                "Tarifas de Antecipa\u00e7\u00e3o Parcele j\u00e1",
+                "Tarifas de Cart\u00f5es de Cr\u00e9dito Sicredi",
+                "Tarifas DOC / TED"
+            ]
+        },
+        {
+            "title": "3.03 Outras Receitas e Entradas",
+            "description_category": [
+                "Empr\u00e9stimos de S\u00f3cios",
+                "Receitas a Identificar",
+                "Repasse laborat\u00f3rio Dore"
+            ]
+        },
+        {
+            "title": "4.09 Despesas com Diretoria",
+            "description_category": [
+                "Distribui\u00e7\u00e3o de Lucro Laborat\u00f3rio",
+                "Antecipa\u00e7\u00e3o de Lucros",
+                "Plano Odontol\u00f3gico S\u00f3cios"
+            ]
+        },
+        {
+            "title": "5.01 Bens Imobilizados da Empresa",
+            "description_category": [
+                "M\u00e1quinas, Equipamentos e Instala\u00e7\u00f5es Industriais",
+                "M\u00f3veis, Utens\u00edlios e Instala\u00e7\u00f5es Administrativos"
+            ]
+        },
+        {
+            "title": "5.02 Empr\u00e9stimos e Financiamentos",
+            "description_category": [
+                "Devolu\u00e7\u00e3o de Empr\u00e9stimo S\u00f3cios",
+                "Empr\u00e9stimos de Bancos"
+            ]
+        },
+        {
+            "title": "Repasse Laboratoriais",
+            "description_category": [
+                "Repasse laborat\u00f3rio Dore",
+                "Distrib. Lucro Laborat\u00f3rio"
+            ]
+        }
+    ],
+    "excluded_categories": [
+        "Repasse laborat\u00f3rio Dore",
+        "Distrib. Lucro Laborat\u00f3rio"
+    ]
+}

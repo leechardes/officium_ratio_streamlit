@@ -1,0 +1,23 @@
+{
+    "folders_to_check": [
+        "assets",
+        "components",
+        "config",
+        "utils",
+        "views",
+        "scripts"
+    ],
+    "ignore_dirs": [
+        ".git",
+        "venv",
+        "__pycache__"
+    ],
+    "extensions_to_ignore": [
+        ".md",
+        ".log"
+    ],
+    "ignore_files_root": [
+        "README.md",
+        "LICENSE"
+    ]
+}
