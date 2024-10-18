@@ -373,3 +373,13 @@ def show_config():
             # st.rerun()
         else:
             st.warning("Por favor, selecione pelo menos um arquivo CSV para processar.")
+
+    data_json = json.dumps(categories)
+    data_bytes = data_json.encode("utf-8")
+    # Download do arquivo de configuração de categorias
+    st.download_button(
+        label="Download do arquivo de configuração de categorias",
+        data=data_bytes,
+        file_name="config_categories.json",
+        mime="json",
+    )

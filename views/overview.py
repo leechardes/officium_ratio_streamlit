@@ -120,7 +120,7 @@ def show_summary(df, x_field, title, is_quarterly = st.session_state.get('is_qua
     )
 
 def create_pivot_table(df, x_field, is_quarterly):
-    
+
     if is_quarterly:
         x_field_pivot = 'Trimestre'
     else:
