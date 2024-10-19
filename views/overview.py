@@ -1,21 +1,30 @@
 from io import BytesIO
-import json
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 from utils.helpers import format_real
-import uuid 
-import xlsxwriter
+import uuid
+from data.categories import CategoryManager
 
-# Função para carregar o arquivo JSON
+# Inicializa o CategoryManager
+category_manager = CategoryManager()
+
+# Função para carregar as categorias e categorias excluídas do MongoDB
 def load_categories():
-    with open('config/categories.json', 'r') as f:
-        return json.load(f)
-    
+    categories = {
+        "categories": category_manager.list_categories(st.session_state.company),
+        "excluded_categories": category_manager.list_excluded_categories(st.session_state.company)
+    }
+    return categories
+
 def show_overview():
+
     st.title("Dashboard Financeiro - Visão Geral")
 
-    # Carrega as categorias a partir do arquivo JSON
+    if st.session_state.df.empty:
+        return
+
+    # Carrega as categorias a partir do MongoDB
     categories = load_categories()
 
     # Aplicar o filtro para remover as categorias excluídas
@@ -26,13 +35,13 @@ def show_overview():
     df_ignored_excluded = st.session_state.df
 
     # Agrupa por Ano-Mês-Dia e Trimestre
-    st.session_state.total_grupo_1_ymd = df_filtered[df_filtered['Código Grupo'] == 1].groupby('Mês/Ano')['Valor'].sum()
-    st.session_state.total_grupo_1_trimestre = df_filtered[df_filtered['Código Grupo'] == 1].groupby('Trimestre')['Valor'].sum()
+    st.session_state.total_grupo_1_ymd = df_filtered[df_filtered['Código Grupo'] == '1'].groupby('Mês/Ano')['Valor'].sum()
+    st.session_state.total_grupo_1_trimestre = df_filtered[df_filtered['Código Grupo'] == '1'].groupby('Trimestre')['Valor'].sum()
         
     # Filtros
     st.session_state.is_quarterly = st.session_state.exibe_trimestre == "Trimestre"
     st.session_state.is_percent = st.session_state.calcula_percentual == "Sim"
-    st.session_state.is_graph = st.session_state.exibe_grafico == "Sim" and  st.session_state.is_percent
+    st.session_state.is_graph = st.session_state.exibe_grafico == "Sim" and st.session_state.is_percent
 
     show_main_metrics(df_filtered)
     show_bar_chart(df_filtered, 'Descrição Grupo')
@@ -40,7 +49,7 @@ def show_overview():
     show_summary(df_filtered, title='Resumo por Grupo', x_field='Descrição Grupo')
     show_summary(df_filtered, title='Resumo por Grupo Detalhado', x_field='Descrição Grupo', is_quarterly=not st.session_state.is_quarterly)
 
-    # Lista para armazenar todas as descrições de categoria do JSON
+    # Lista para armazenar todas as descrições de categoria do MongoDB
     all_defined_categories = []
 
     for category in categories['categories']:
@@ -51,8 +60,8 @@ def show_overview():
         # Filtra o DataFrame com base nas descrições de categoria
         df_filtered_category = df_ignored_excluded[df_ignored_excluded['Descrição Categoria'].isin(description_category)]
         show_summary(df_filtered_category, title=title, x_field='Descrição Categoria')
-     
-    # Gera o df_outros filtrando todas as categorias que não estão no JSON
+
+    # Gera o df_outros filtrando todas as categorias que não estão no MongoDB
     df_outros = df_filtered[~df_filtered['Descrição Categoria'].isin(all_defined_categories)]
     show_summary(df_outros, title='Outros', x_field='Descrição Categoria')
 
@@ -93,7 +102,11 @@ def show_line_chart(df, x_field, group_field):
     )
     st.plotly_chart(fig_line, use_container_width=True)
 
-def show_summary(df, x_field, title, is_quarterly = st.session_state.get('is_quarterly', False) ,group_1=None,group_2=None,description_1=None,description_2=None):
+def show_summary(df, x_field, title, is_quarterly=None, group_1=None, group_2=None, description_1=None, description_2=None):
+    
+    if is_quarterly is None:
+        is_quarterly = st.session_state.get('is_quarterly', False)
+
     if is_quarterly:
         df = df.groupby(['Trimestre', x_field])['Valor'].sum().reset_index()
     else:
@@ -120,7 +133,6 @@ def show_summary(df, x_field, title, is_quarterly = st.session_state.get('is_qua
     )
 
 def create_pivot_table(df, x_field, is_quarterly):
-
     if is_quarterly:
         x_field_pivot = 'Trimestre'
     else:
@@ -141,14 +153,13 @@ def create_pivot_table(df, x_field, is_quarterly):
     return pivot
 
 def create_combined_pivot(pivot, is_quarterly, group_1, group_2, description_1, description_2):
-    
     if st.session_state.is_percent:
         pivot_percent = calculate_percentages(pivot, is_quarterly)
         pivot_combined = combine_pivot_and_percent(pivot, pivot_percent)
     else:
         pivot_combined = pivot.copy()
-    
-    pivot_combined = add_totals(pivot_combined,group_1,group_2,description_1,description_2)
+
+    pivot_combined = add_totals(pivot_combined, group_1, group_2, description_1, description_2)
     return pivot_combined
 
 def calculate_percentages(pivot, is_quarterly):
@@ -157,7 +168,7 @@ def calculate_percentages(pivot, is_quarterly):
         if is_quarterly:
             first_row_value = st.session_state.total_grupo_1_trimestre[col]
         else:
-            first_row_value = st.session_state.total_grupo_1_ymd[col]   
+            first_row_value = st.session_state.total_grupo_1_ymd[col]
         pivot_percent[col] = pivot[col] / first_row_value * 100 if first_row_value != 0 else 0
     return pivot_percent
 
@@ -169,8 +180,7 @@ def combine_pivot_and_percent(pivot, pivot_percent):
     new_order = [item for pair in zip(pivot.columns, [f'{col} %' for col in pivot.columns]) for item in pair]
     return pivot_combined[new_order]
 
-def add_totals(pivot_combined,group_1=None,group_2=None,description_1=None,description_2=None):
-
+def add_totals(pivot_combined, group_1=None, group_2=None, description_1=None, description_2=None):
     if group_1 is not None and description_1 is not None:
         grupo_1_total = pivot_combined.loc[group_1].sum()
         grupo_1_total.name = description_1
@@ -178,7 +188,6 @@ def add_totals(pivot_combined,group_1=None,group_2=None,description_1=None,descr
     if group_2 is not None and description_2 is not None:
         grupo_2_total = pivot_combined.loc[group_2].sum()
         grupo_2_total.name = description_2
-    
 
     if group_1 is not None and group_2 is not None:
         pivot_combined = pd.concat([
@@ -231,7 +240,7 @@ def display_percentage_chart(pivot_combined, is_quarterly):
     labels = {'value': 'Percentual (%)', 'index': 'Trimestres' if is_quarterly else 'Meses'}
 
     fig = px.line(
-        df_percentual, 
+        df_percentual,
         title=title,
         labels=labels
     )
@@ -263,10 +272,7 @@ def to_excel(df):
 
     # Formata a primeira linha como negrito
     worksheet.set_row(0, None, workbook.add_format({'bold': True}))
-
+ 
     writer.close()
     processed_data = output.getvalue()
     return processed_data
-
-
-

@@ -1,0 +1,8 @@
+{
+    "username": "officium_ratio",
+    "password": "JnRLh2FWzbmnh7TC",
+    "host": "api.inoveon.com.br",
+    "database": "officium_ratio",
+    "auth_source": "officium_ratio",
+    "port": 27017
+  }

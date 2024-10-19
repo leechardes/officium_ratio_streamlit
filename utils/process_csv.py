@@ -21,7 +21,9 @@ def get_trimester(month):
     else:
         return '4 Trimestre'
 
-def process_csv(input_file, writer, months):
+def process_csv(input_file, company, manager):
+    group_data = []  # Armazena todos os dados do grupo antes de inserir no MongoDB
+    months = []  # Armazena os meses capturados da coluna da linha 1
     with open(input_file, mode='r', encoding='utf-8') as infile:
         reader = csv.reader(infile)
 
@@ -95,41 +97,19 @@ def process_csv(input_file, writer, months):
                         print(f"Erro ao converter o mês: {month}")
                         continue
 
-                    # Escrever a nova linha no formato desejado
-                    writer.writerow([
-                        group, group_description, 
-                        subgroup if subgroup else '', subgroup_description, 
-                        sequence, item, 
-                        month, formatted_month, value, trimestre  # Adiciona o trimestre na linha
-                    ])
+                    # Preparar os dados para inserção no MongoDB
+                    group_data.append({
+                        "group_code": group,
+                        "group_description": group_description, 
+                        "subgroup_code": subgroup if subgroup else '',
+                        "subgroup_description": subgroup_description, 
+                        "sequence_group": sequence, 
+                        "category_description": item, 
+                        "month_year": month, 
+                        "date": formatted_month, 
+                        "value": value, 
+                        "quarter": trimestre
+                    })
 
-def process_folder(input_folder):
-    output_file = 'data.csv'
-    months = []
-
-    with open(output_file, mode='w', newline='', encoding='utf-8') as outfile:
-        writer = csv.writer(outfile, delimiter=';')
-
-        # Escrever o cabeçalho no arquivo de saída com os nomes atualizados
-        writer.writerow([
-            'Código Grupo', 'Descrição Grupo', 
-            'Código SubGrupo', 'Descrição SubGrupo', 
-            'Sequência Grupo', 'Descrição Categoria', 
-            'Mês/Ano', 'Ano-Mês-Dia', 'Valor', 'Trimestre'  # Adiciona o cabeçalho para o Trimestre
-        ])
-
-        # Percorrer todos os arquivos da pasta
-        for filename in os.listdir(input_folder):
-            if filename.endswith('.csv'):
-                file_path = os.path.join(input_folder, filename)
-                print(f"Processando arquivo: {file_path}")
-                process_csv(file_path, writer, months)
-
-if __name__ == "__main__":
-    # Configurar argparse para aceitar a pasta como argumento
-    parser = argparse.ArgumentParser(description='Processar todos os arquivos CSV de uma pasta.')
-    parser.add_argument('input_folder', help='Caminho da pasta contendo os arquivos CSV a serem processados')
-    args = parser.parse_args()
-    
-    # Chamar a função passando a pasta recebida
-    process_folder(args.input_folder)
+    # Inserir todos os dados no MongoDB
+    manager.insert_group_data(group_data, company)

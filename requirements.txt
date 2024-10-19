@@ -5,3 +5,5 @@ setuptools
 xlsxwriter
 openpyxl
 babel
+pymongo
+bcrypt
