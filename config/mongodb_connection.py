@@ -21,7 +21,7 @@ def initialize_mongodb():
     # Monta a URI de conexão
     mongo_uri = f"mongodb://{username}:{password}@{host}:{port}?authSource={auth_source}"
     
-    client = MongoClient(mongo_uri)
+    client = MongoClient(mongo_uri) 
 
     # Testa a conexão
     try:
