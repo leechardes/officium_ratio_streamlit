@@ -63,7 +63,12 @@ def show_overview():
 
     # Gera o df_outros filtrando todas as categorias que não estão no MongoDB
     df_outros = df_filtered[~df_filtered['Descrição Categoria'].isin(all_defined_categories)]
-    show_summary(df_outros, title='Outros', x_field='Descrição Categoria')
+
+    if not df_outros.empty:
+        show_summary(df_outros, title='Outros', x_field='Descrição Categoria')
+
+    # Chamada da função para exibir o resumo total
+    show_total_summary(df_filtered, categories)
 
 def show_dataframe(df):
     st.write(df)
@@ -210,11 +215,18 @@ def add_totals(pivot_combined, group_1=None, group_2=None, description_1=None, d
             pivot_combined.drop(group_2)
         ])
 
+    df = st.session_state.df
+
+    total_receitas = df[df['Valor'] > 0]['Valor'].sum()
+
     total_geral = pivot_combined.sum()
     total_geral.name = 'Total Geral'
     pivot_combined = pd.concat([pivot_combined, pd.DataFrame([total_geral])])
     
     pivot_combined['Total por Linha'] = pivot_combined[[col for col in pivot_combined.columns if "%" not in col]].sum(axis=1)
+
+    # Adiciona a coluna de Percentual
+    pivot_combined['Total por Linha %'] = (pivot_combined['Total por Linha'] / total_receitas) * 100
     
     return pivot_combined
 
@@ -245,6 +257,58 @@ def display_percentage_chart(pivot_combined, is_quarterly):
         labels=labels
     )
     st.plotly_chart(fig, use_container_width=True)
+
+def show_total_summary(df, categories, is_quarterly=None):
+    if is_quarterly is None:
+        is_quarterly = st.session_state.get('is_quarterly', False)
+
+    # DataFrame temporário para armazenar totais de cada categoria
+    df_totals = pd.DataFrame(columns=['Descrição Categoria', 'Valor', 'Trimestre', 'Ano-Mês-Dia', 'Mês/Ano'])
+
+    df = st.session_state.df
+    # Itera sobre as categorias para calcular o total de cada uma, agrupado por tempo
+    for category in categories['categories']:
+        title = category['title']
+        description_category = category['description_category']
+        
+        # Filtra o DataFrame para apenas as linhas que correspondem à categoria atual
+        df_filtered_category = df[df['Descrição Categoria'].isin(description_category)]
+        
+        # Aplica o agrupamento de tempo baseado em `is_quarterly` e nas colunas disponíveis
+        if is_quarterly and 'Trimestre' in df_filtered_category.columns:
+            df_category_grouped = df_filtered_category.groupby(['Trimestre'])['Valor'].sum().reset_index()
+            df_category_grouped['Descrição Categoria'] = title
+            df_category_grouped['Ano-Mês-Dia'] = None
+            df_category_grouped['Mês/Ano'] = None
+        elif 'Ano-Mês-Dia' in df_filtered_category.columns and 'Mês/Ano' in df_filtered_category.columns:
+            df_category_grouped = df_filtered_category.groupby(['Ano-Mês-Dia', 'Mês/Ano'])['Valor'].sum().reset_index()
+            df_category_grouped['Descrição Categoria'] = title
+            df_category_grouped['Trimestre'] = None
+        else:
+            # Agrupamento sem considerar o tempo se as colunas esperadas não estão disponíveis
+            df_category_grouped = pd.DataFrame({'Descrição Categoria': [title], 'Valor': [df_filtered_category['Valor'].sum()]})
+            df_category_grouped['Trimestre'] = None
+            df_category_grouped['Ano-Mês-Dia'] = None
+            df_category_grouped['Mês/Ano'] = None
+
+        # Concatena o total da categoria no DataFrame de totais
+        df_totals = pd.concat([df_totals, df_category_grouped], ignore_index=True)
+
+    # Total geral para todas as categorias
+    total_geral = df_totals['Valor'].sum()
+    df_totals = pd.concat(
+        [df_totals, pd.DataFrame({
+            'Descrição Categoria': ['Total Geral'],
+            'Valor': [total_geral],
+            'Trimestre': [None],
+            'Ano-Mês-Dia': [None],
+            'Mês/Ano': [None]
+        })],
+        ignore_index=True
+    )
+
+    # Exibe o resumo com os totais adaptado ao tempo
+    show_summary(df_totals, title='Resumo Total por Categoria', x_field='Descrição Categoria')
 
 def to_excel(df):
     output = BytesIO()
