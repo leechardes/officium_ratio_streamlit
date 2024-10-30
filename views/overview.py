@@ -39,6 +39,42 @@ def show_overview():
     df_filtered = st.session_state.df[~st.session_state.df['Descrição Categoria'].isin(excluded_categories)]
     df_excluded = st.session_state.df[st.session_state.df['Descrição Categoria'].isin(excluded_categories)]
 
+    
+    # st.write(st.session_state.df)
+    # st.write(df_excluded)
+    # st.write(df_filtered)
+    # st.write("Categorias Excluídas:")
+
+    # for category in excluded_categories:
+    #     st.write(category)
+
+    # st.write("Categorias Incluídas:")
+
+    # for category in included_categories:
+    #     st.write(category)
+
+    # st.write(df_filtered)
+
+    categorias_301 = [categoria for categoria in categories["categories"] if categoria["title"].startswith("3.01")]
+
+    description_category = categorias_301[0]["description_category"]
+
+    df_filtered_301 = df_filtered[df_filtered['Descrição Categoria'].isin(description_category)]
+
+    total_receitas = df_filtered_301.sum()['Valor']
+
+    st.session_state.total_301 = total_receitas 
+
+
+    # st.write(categorias_301)
+    # st.write(df_filtered_301)
+    # st.write(total_receitas)
+
+    # Agrupa por Ano-Mês-Dia e Trimestre
+    st.session_state.total_grupo_1_ymd = df_filtered[df_filtered['Código Grupo'] == '1'].groupby('Mês/Ano')['Valor'].sum()
+    st.session_state.total_grupo_1_trimestre = df_filtered[df_filtered['Código Grupo'] == '1'].groupby('Trimestre')['Valor'].sum()
+
+
     # Agrupa por Ano-Mês-Dia e Trimestre
     st.session_state.total_grupo_1_ymd = df_filtered[df_filtered['Código Grupo'] == '1'].groupby('Mês/Ano')['Valor'].sum()
     st.session_state.total_grupo_1_trimestre = df_filtered[df_filtered['Código Grupo'] == '1'].groupby('Trimestre')['Valor'].sum()
@@ -51,8 +87,14 @@ def show_overview():
     show_main_metrics(df_filtered)
     show_bar_chart(df_filtered, 'Descrição Grupo')
 
-    show_summary(df_filtered, title='Resumo por Grupo', x_field='Descrição Grupo')
-    show_summary(df_filtered, title='Resumo por Grupo Detalhado', x_field='Descrição Grupo', is_quarterly=not st.session_state.is_quarterly)
+    # show_summary(df_filtered, title='Resumo por Grupo', x_field='Descrição SubGrupo')
+    # show_summary(df_filtered, title='Resumo por Grupo Detalhado', x_field='Descrição SubGrupo', is_quarterly=not st.session_state.is_quarterly)
+    
+    # Chamada da função para exibir o resumo total
+    show_total_summary(df_filtered, ordered_categories)
+
+    # Chamada da função para exibir o resumo total
+    show_total_summary(df_filtered, ordered_categories, is_quarterly = not st.session_state.is_quarterly)
 
     # Lista para armazenar todas as descrições de categoria do MongoDB
     all_defined_categories = []
@@ -74,8 +116,6 @@ def show_overview():
 
     show_summary(df_excluded, title='Repasses Laboratoriais', x_field='Descrição Categoria')
 
-    # Chamada da função para exibir o resumo total
-    show_total_summary(df_filtered, ordered_categories)
 
 def show_dataframe(df):
     st.write(df)
@@ -222,9 +262,7 @@ def add_totals(pivot_combined, group_1=None, group_2=None, description_1=None, d
             pivot_combined.drop(group_2)
         ])
 
-    df = st.session_state.df
-
-    total_receitas = df[df['Valor'] > 0]['Valor'].sum()
+    total_receitas = st.session_state.total_301
 
     total_geral = pivot_combined.sum()
     total_geral.name = 'Total Geral'
@@ -287,16 +325,11 @@ def show_total_summary(df, categories, is_quarterly=None):
             df_category_grouped['Descrição Categoria'] = title
             df_category_grouped['Ano-Mês-Dia'] = None
             df_category_grouped['Mês/Ano'] = None
-        elif 'Ano-Mês-Dia' in df_filtered_category.columns and 'Mês/Ano' in df_filtered_category.columns:
+        else:
+            # Agrupamento sem considerar o tempo se as colunas esperadas não estão disponíveis
             df_category_grouped = df_filtered_category.groupby(['Ano-Mês-Dia', 'Mês/Ano'])['Valor'].sum().reset_index()
             df_category_grouped['Descrição Categoria'] = title
             df_category_grouped['Trimestre'] = None
-        else:
-            # Agrupamento sem considerar o tempo se as colunas esperadas não estão disponíveis
-            df_category_grouped = pd.DataFrame({'Descrição Categoria': [title], 'Valor': [df_filtered_category['Valor'].sum()]})
-            df_category_grouped['Trimestre'] = None
-            df_category_grouped['Ano-Mês-Dia'] = None
-            df_category_grouped['Mês/Ano'] = None
 
         # Concatena o total da categoria no DataFrame de totais
         df_totals = pd.concat([df_totals, df_category_grouped], ignore_index=True)
@@ -315,7 +348,7 @@ def show_total_summary(df, categories, is_quarterly=None):
     )
 
     # Exibe o resumo com os totais adaptado ao tempo
-    show_summary(df_totals, title='Resumo Total por Categoria', x_field='Descrição Categoria')
+    show_summary(df_totals, title='Resumo Total por Categoria', x_field='Descrição Categoria',is_quarterly=is_quarterly)
 
 def to_excel(df):
     output = BytesIO()
