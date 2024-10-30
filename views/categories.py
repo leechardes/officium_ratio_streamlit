@@ -24,6 +24,8 @@ def add_category():
 def edit_category():
     st.subheader("Editar subgrupos existentes")
     categories = category_manager.list_categories(st.session_state.company)
+    categories = sorted(categories, key=lambda x: x["title"])
+    
     category_titles = [category["title"] for category in categories]
     selected_category = st.selectbox("Selecione o subgrupo para editar", category_titles)
 

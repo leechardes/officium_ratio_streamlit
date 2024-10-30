@@ -30,9 +30,14 @@ def show_overview():
     # Aplicar o filtro para remover as categorias excluídas
     excluded_categories = categories["excluded_categories"]
 
+    # Ordenar por ordem alfabetica as categorias
+    included_categories = categories["categories"]
+
+    ordered_categories = sorted(included_categories, key=lambda x: x["title"])
+
     # Remover as linhas que contenham as categorias excluídas
     df_filtered = st.session_state.df[~st.session_state.df['Descrição Categoria'].isin(excluded_categories)]
-    df_ignored_excluded = st.session_state.df
+    df_excluded = st.session_state.df[st.session_state.df['Descrição Categoria'].isin(excluded_categories)]
 
     # Agrupa por Ano-Mês-Dia e Trimestre
     st.session_state.total_grupo_1_ymd = df_filtered[df_filtered['Código Grupo'] == '1'].groupby('Mês/Ano')['Valor'].sum()
@@ -52,13 +57,13 @@ def show_overview():
     # Lista para armazenar todas as descrições de categoria do MongoDB
     all_defined_categories = []
 
-    for category in categories['categories']:
+    for category in ordered_categories:
         title = category['title']
         description_category = category['description_category']
         all_defined_categories.extend(description_category)
 
         # Filtra o DataFrame com base nas descrições de categoria
-        df_filtered_category = df_ignored_excluded[df_ignored_excluded['Descrição Categoria'].isin(description_category)]
+        df_filtered_category = df_filtered[df_filtered['Descrição Categoria'].isin(description_category)]
         show_summary(df_filtered_category, title=title, x_field='Descrição Categoria')
 
     # Gera o df_outros filtrando todas as categorias que não estão no MongoDB
@@ -67,8 +72,10 @@ def show_overview():
     if not df_outros.empty:
         show_summary(df_outros, title='Outros', x_field='Descrição Categoria')
 
+    show_summary(df_excluded, title='Repasses Laboratoriais', x_field='Descrição Categoria')
+
     # Chamada da função para exibir o resumo total
-    show_total_summary(df_filtered, categories)
+    show_total_summary(df_filtered, ordered_categories)
 
 def show_dataframe(df):
     st.write(df)
@@ -267,7 +274,7 @@ def show_total_summary(df, categories, is_quarterly=None):
 
     df = st.session_state.df
     # Itera sobre as categorias para calcular o total de cada uma, agrupado por tempo
-    for category in categories['categories']:
+    for category in categories:
         title = category['title']
         description_category = category['description_category']
         
