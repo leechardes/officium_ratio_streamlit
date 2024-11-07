@@ -74,8 +74,8 @@ def show_overview():
     st.session_state.total_grupo_1_ymd = df_filtered_301[df_filtered_301['Código Grupo'] == '1'].groupby('Mês/Ano')['Valor'].sum()
     st.session_state.total_grupo_1_trimestre = df_filtered_301[df_filtered_301['Código Grupo'] == '1'].groupby('Trimestre')['Valor'].sum()
 
-    st.write(st.session_state.total_grupo_1_ymd)
-    st.write(st.session_state.total_grupo_1_trimestre)
+    # st.write(st.session_state.total_grupo_1_ymd)
+    # st.write(st.session_state.total_grupo_1_trimestre)
 
 
     # Filtros
