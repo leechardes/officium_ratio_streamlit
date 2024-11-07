@@ -71,14 +71,13 @@ def show_overview():
     # st.write(total_receitas)
 
     # Agrupa por Ano-Mês-Dia e Trimestre
-    st.session_state.total_grupo_1_ymd = df_filtered[df_filtered['Código Grupo'] == '1'].groupby('Mês/Ano')['Valor'].sum()
-    st.session_state.total_grupo_1_trimestre = df_filtered[df_filtered['Código Grupo'] == '1'].groupby('Trimestre')['Valor'].sum()
+    st.session_state.total_grupo_1_ymd = df_filtered_301[df_filtered_301['Código Grupo'] == '1'].groupby('Mês/Ano')['Valor'].sum()
+    st.session_state.total_grupo_1_trimestre = df_filtered_301[df_filtered_301['Código Grupo'] == '1'].groupby('Trimestre')['Valor'].sum()
+
+    st.write(st.session_state.total_grupo_1_ymd)
+    st.write(st.session_state.total_grupo_1_trimestre)
 
 
-    # Agrupa por Ano-Mês-Dia e Trimestre
-    st.session_state.total_grupo_1_ymd = df_filtered[df_filtered['Código Grupo'] == '1'].groupby('Mês/Ano')['Valor'].sum()
-    st.session_state.total_grupo_1_trimestre = df_filtered[df_filtered['Código Grupo'] == '1'].groupby('Trimestre')['Valor'].sum()
-        
     # Filtros
     st.session_state.is_quarterly = st.session_state.exibe_trimestre == "Trimestre"
     st.session_state.is_percent = st.session_state.calcula_percentual == "Sim"
@@ -87,9 +86,6 @@ def show_overview():
     show_main_metrics(df_filtered)
     show_bar_chart(df_filtered, 'Descrição Grupo')
 
-    # show_summary(df_filtered, title='Resumo por Grupo', x_field='Descrição SubGrupo')
-    # show_summary(df_filtered, title='Resumo por Grupo Detalhado', x_field='Descrição SubGrupo', is_quarterly=not st.session_state.is_quarterly)
-    
     # Chamada da função para exibir o resumo total
     show_total_summary(df_filtered, ordered_categories)
 
